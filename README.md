@@ -1,4 +1,4 @@
-# R365 & Toast POS Reconciliation Extension
+# Haypka
 
 A browser extension that helps you reconcile accounting entries between Restaurant 365 (R365) and Toast POS systems without using APIs.
 

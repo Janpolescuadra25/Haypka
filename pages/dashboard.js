@@ -1,6 +1,6 @@
 /**
  * Dashboard Interface Logic
- * R365 Toast Reconciliation Extension
+ * Haypka
  */
 
 document.addEventListener('DOMContentLoaded', function() {

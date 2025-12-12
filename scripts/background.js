@@ -1,6 +1,6 @@
 // Background Service Worker - Handles communication and processing
 
-console.log('R365-Toast Extension Background Service Worker loaded');
+console.log('Haypka Extension Background Service Worker loaded');
 
 // Listen for scraper ready messages
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

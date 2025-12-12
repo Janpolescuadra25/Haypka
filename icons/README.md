@@ -1,6 +1,6 @@
 # Icons Directory
 
-This directory contains all icon assets for the R365 Toast Reconciliation Extension.
+This directory contains all icon assets for the Haypka extension.
 
 ## Icon Requirements
 
