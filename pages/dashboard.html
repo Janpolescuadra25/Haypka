@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Reconciliation Dashboard</title>
+  <link rel="stylesheet" href="../styles/dashboard.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>R365 & Toast Reconciliation Dashboard</h1>
+      <button id="refreshBtn" class="btn btn-primary">Refresh Comparison</button>
+    </header>
+
+    <div class="summary-cards">
+      <div class="card">
+        <h3>Total Differences</h3>
+        <div class="value" id="totalDiff">0</div>
+      </div>
+      <div class="card">
+        <h3>Matched Entries</h3>
+        <div class="value success" id="totalMatched">0</div>
+      </div>
+      <div class="card">
+        <h3>Total Variance</h3>
+        <div class="value error" id="totalVariance">$0.00</div>
+      </div>
+      <div class="card">
+        <h3>R365 Only</h3>
+        <div class="value" id="r365Only">0</div>
+      </div>
+      <div class="card">
+        <h3>Toast Only</h3>
+        <div class="value" id="toastOnly">0</div>
+      </div>
+      <div class="card">
+        <h3>Amount Diffs</h3>
+        <div class="value" id="amountDiffs">0</div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <input type="text" id="searchInput" placeholder="Search by account or date...">
+      <select id="typeFilter">
+        <option value="all">All Differences</option>
+        <option value="R365_ONLY">R365 Only</option>
+        <option value="TOAST_ONLY">Toast Only</option>
+        <option value="AMOUNT_DIFFERENCE">Amount Differences</option>
+      </select>
+      <button id="clearDataBtn" class="btn btn-danger">Clear All Data</button>
+    </div>
+
+    <div class="differences-section">
+      <h2>Differences</h2>
+      <div id="differencesList"></div>
+    </div>
+
+    <div id="noData" class="no-data" style="display: none;">
+      <p>No comparison results found. Please extract data and run comparison first.</p>
+    </div>
+  </div>
+
+  <script src="../scripts/storage-manager.js"></script>
+  <script src="../scripts/comparison-engine.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
