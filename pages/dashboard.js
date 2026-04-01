@@ -42,18 +42,51 @@ async function loadUserProfile() {
 
 /**
  * Load recent reconciliations
+ * Reads from comparisonResults (latest comparison) or falls back to reconciliations history.
  */
 async function loadRecentReconciliations() {
     try {
-        const data = await chrome.storage.local.get(['reconciliations']);
-        const reconciliations = data.reconciliations || [];
-        
+        const data = await chrome.storage.local.get(['comparisonResults', 'reconciliations']);
+        let reconciliations = [];
+
+        // Prefer comparisonResults populated by the comparison engine
+        if (data.comparisonResults) {
+            const results = data.comparisonResults;
+            const entries = [
+                ...(results.differences || []),
+                ...(results.matched || [])
+            ];
+            reconciliations = entries.map((e, i) => {
+                let status;
+                if (e._type === 'MATCHED') {
+                    status = 'matched';
+                } else if (e._type === 'AMOUNT_DIFF' || e._type === 'TOAST_ONLY' || e._type === 'R365_ONLY') {
+                    status = 'discrepancy';
+                } else {
+                    status = 'pending';
+                }
+                return {
+                    id: `compare-${i}`,
+                    date: results.lastCompared || new Date().toISOString(),
+                    locationName: e.toastLabel || e.r365Label || 'Unknown',
+                    category: e.toastLabel || e.r365Label || 'General',
+                    toastAmount: e.toastAmount || 0,
+                    r365Amount: e.r365Amount || 0,
+                    status
+                };
+            });
+        }
+
+        // Fall back to stored reconciliations history if no comparison results
+        if (reconciliations.length === 0 && data.reconciliations) {
+            reconciliations = data.reconciliations || [];
+        }
+
         // Sort by date (most recent first)
         reconciliations.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        const recentList = reconciliations.slice(0, 10);
-        displayReconciliations(recentList);
-        
+
+        displayReconciliations(reconciliations.slice(0, 10));
+
     } catch (error) {
         console.error('Error loading reconciliations:', error);
         showNotification('Failed to load reconciliations', 'error');
@@ -109,21 +142,36 @@ function displayReconciliations(reconciliations) {
  */
 async function loadStatistics() {
     try {
-        const data = await chrome.storage.local.get(['reconciliations', 'statistics']);
-        const reconciliations = data.reconciliations || [];
-        
-        // Calculate statistics
-        const stats = calculateStatistics(reconciliations);
-        
+        const data = await chrome.storage.local.get(['comparisonResults', 'reconciliations', 'statistics']);
+
+        let stats;
+
+        // Prefer summary from the latest comparison engine run
+        if (data.comparisonResults && data.comparisonResults.summary) {
+            const s = data.comparisonResults.summary;
+            stats = {
+                total: s.totalMatched + s.totalDifferences,
+                matched: s.totalMatched,
+                discrepancies: s.totalDifferences,
+                totalVariance: s.totalVariance,
+                byCategory: {},
+                byLocation: {},
+                byDate: {}
+            };
+        } else {
+            const reconciliations = data.reconciliations || [];
+            stats = calculateStatistics(reconciliations);
+        }
+
         // Update UI
         document.getElementById('totalReconciliations').textContent = stats.total;
         document.getElementById('matchedCount').textContent = stats.matched;
         document.getElementById('discrepancyCount').textContent = stats.discrepancies;
         document.getElementById('totalVariance').textContent = `$${formatCurrency(Math.abs(stats.totalVariance))}`;
-        
+
         // Update charts
         updateCharts(stats);
-        
+
     } catch (error) {
         console.error('Error loading statistics:', error);
         showNotification('Failed to load statistics', 'error');
