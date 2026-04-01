@@ -295,12 +295,71 @@ h3 {
   font-size: 14px;
 }
 
+/* Badge styles */
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.badge-success { background: #e8f5e9; color: #2e7d32; }
+.badge-warning { background: #fff8e1; color: #f57f17; }
+.badge-info    { background: #e3f2fd; color: #1565c0; }
+.badge-secondary { background: #eeeeee; color: #424242; }
+.badge-danger  { background: #ffebee; color: #c62828; }
+
+/* Difference card header/details */
+.difference-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.difference-header .account {
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+}
+
+.difference-header .date {
+  color: #888;
+  font-size: 13px;
+}
+
+.difference-details {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  font-size: 13px;
+  color: #555;
+}
+
+.difference-details .label {
+  font-weight: 600;
+  color: #666;
+  margin-right: 4px;
+}
+
+.difference-details .amount {
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.text-danger { color: #c62828; }
+.text-success { color: #2e7d32; }
+
 /* Responsive */
 @media (max-width: 768px) {
-  .entry-comparison {
+  .difference-details {
     grid-template-columns: 1fr;
   }
-  
+
   .summary-cards {
     grid-template-columns: repeat(2, 1fr);
   }
