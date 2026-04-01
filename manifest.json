@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "R365 & Toast POS Reconciliation",
+  "version": "1.0.0",
+  "description": "Compare and reconcile entries between R365 accounting and Toast POS systems",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://*.restaurant365.com/*",
+    "https://*.toasttab.com/*"
+  ],
+  "background": {
+    "service_worker": "scripts/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.restaurant365.com/*"],
+      "js": ["scripts/r365-scraper.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://*.toasttab.com/*"],
+      "js": ["scripts/toast-scraper.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "pages/popup.html",
+    "default_icon": {
+      "16":  "icons/icon.svg",
+      "48":  "icons/icon.svg",
+      "128": "icons/icon.svg"
+    }
+  },
+  "options_page": "pages/settings.html",
+  "icons": {
+    "16":  "icons/icon.svg",
+    "48":  "icons/icon.svg",
+    "128": "icons/icon.svg"
+  }
+}

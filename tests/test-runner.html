@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Haypka Extension – Test Runner</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f1117; color: #e0e0e0; padding: 32px; line-height: 1.6; }
+    h1 { font-size: 1.6rem; color: #fff; margin-bottom: 4px; }
+    .subtitle { color: #888; font-size: 0.9rem; margin-bottom: 32px; }
+    #summary { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; }
+    .stat { background: #1e2130; border-radius: 8px; padding: 14px 22px; min-width: 130px; text-align: center; }
+    .stat .num { font-size: 2rem; font-weight: 700; }
+    .stat .label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: .05em; }
+    .stat.pass .num { color: #4caf50; } .stat.fail .num { color: #f44336; } .stat.total .num { color: #64b5f6; }
+    .suite { background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+    .suite-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: #1e2130; cursor: pointer; user-select: none; }
+    .suite-header:hover { background: #252840; }
+    .suite-name { font-weight: 600; font-size: 1rem; }
+    .suite-badge { font-size: 0.75rem; padding: 2px 10px; border-radius: 99px; font-weight: 600; }
+    .badge-pass { background: #1b5e20; color: #a5d6a7; } .badge-fail { background: #b71c1c; color: #ffcdd2; }
+    .tests { padding: 8px 0; }
+    .test { display: flex; align-items: flex-start; gap: 10px; padding: 8px 20px; border-bottom: 1px solid #1e2130; font-size: 0.875rem; }
+    .test:last-child { border-bottom: none; }
+    .test .icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+    .test.pass .icon { color: #4caf50; } .test.fail .icon { color: #f44336; }
+    .test .name { color: #ccc; flex: 1; } .test.fail .name { color: #fff; }
+    .test .err { color: #ef9a9a; font-size: 0.8rem; margin-top: 4px; white-space: pre-wrap; font-family: monospace; background: #2a0a0a; padding: 6px 10px; border-radius: 4px; }
+    .test-inner { flex: 1; }
+    #progressBar { height: 4px; background: #2a2d3e; border-radius: 2px; margin-bottom: 24px; overflow: hidden; }
+    #progressFill { height: 100%; background: #4caf50; width: 0%; transition: width 0.2s ease; }
+    #progressFill.has-fail { background: #f44336; }
+    footer { margin-top: 32px; color: #555; font-size: 0.8rem; text-align: center; }
+  </style>
+
+  <!-- ① Define the suite() registration function FIRST, before any test files load -->
+  <script>
+    window.__testSuites = [];
+
+    // suite() must be globally available when test-*.js files parse
+    window.suite = function(name, fn) {
+      window.__testSuites.push({ name, fn });
+    };
+
+    // ── Chrome API mock ────────────────────────────────────────────
+    window.chrome = window.chrome || {};
+    chrome.storage = chrome.storage || {};
+    chrome.storage.local = {
+      _data: {},
+      get(keys, cb) {
+        const result = {};
+        if (keys === null) {
+          Object.assign(result, this._data);
+        } else {
+          const arr = Array.isArray(keys) ? keys : [keys];
+          arr.forEach(k => { if (k in this._data) result[k] = this._data[k]; });
+        }
+        cb(result);
+      },
+      set(obj, cb) {
+        Object.assign(this._data, JSON.parse(JSON.stringify(obj)));
+        if (cb) cb();
+      },
+      clear(cb) { this._data = {}; if (cb) cb(); },
+    };
+    chrome.runtime = chrome.runtime || {};
+    chrome.runtime.lastError = null;
+    chrome.storage.sync = {
+      _data: {},
+      get(keys, cb) { const r = {}; (Array.isArray(keys)?keys:[keys]).forEach(k=>{if(k in this._data) r[k]=this._data[k];}); cb(r); },
+      set(obj, cb) { Object.assign(this._data, obj); if(cb) cb(); }
+    };
+  </script>
+</head>
+<body>
+  <h1>🧪 Haypka – Extension Test Suite</h1>
+  <p class="subtitle">Browser-native unit tests · No build tool required</p>
+  <div id="progressBar"><div id="progressFill"></div></div>
+  <div id="summary">
+    <div class="stat total"><div class="num" id="statTotal">–</div><div class="label">Total</div></div>
+    <div class="stat pass"><div class="num" id="statPass">–</div><div class="label">Passed</div></div>
+    <div class="stat fail"><div class="num" id="statFail">–</div><div class="label">Failed</div></div>
+  </div>
+  <div id="suites"></div>
+  <footer>Haypka Extension Test Runner · <span id="runTime"></span></footer>
+
+  <!-- ② Load modules under test (no scraper files – they have top-level chrome.runtime.sendMessage) -->
+  <script src="../scripts/storage-manager.js"></script>
+  <script src="../scripts/comparison-engine.js"></script>
+
+  <!-- ③ Load test suites – suite() is already defined, so registrations succeed -->
+  <script src="test-comparison-engine.js"></script>
+  <script src="test-storage-manager.js"></script>
+  <script src="test-scrapers.js"></script>
+
+  <!-- ④ Runner UI logic – runs after all suites are registered -->
+  <script>
+    // ── Assertion helpers ──────────────────────────────────────
+    const assert = {
+      ok(value, msg = 'Expected truthy value') { if (!value) throw new Error(msg); },
+      equal(actual, expected, msg) {
+        const a = JSON.stringify(actual), e = JSON.stringify(expected);
+        if (a !== e) throw new Error(msg || `Expected ${e} but got ${a}`);
+      },
+      notEqual(actual, expected, msg) {
+        const a = JSON.stringify(actual), e = JSON.stringify(expected);
+        if (a === e) throw new Error(msg || `Expected values to differ but both were ${a}`);
+      },
+      async throws(fn, msg = 'Expected function to throw') {
+        try { await fn(); throw new Error(msg); } catch(e) { if(e.message===msg) throw e; }
+      },
+      closeTo(actual, expected, delta = 0.001, msg) {
+        if (Math.abs(actual - expected) > delta)
+          throw new Error(msg || `Expected ${actual} to be close to ${expected} (±${delta})`);
+      },
+      length(arr, expected, msg) {
+        if (!Array.isArray(arr)) throw new Error(`Expected array but got ${typeof arr}`);
+        if (arr.length !== expected) throw new Error(msg || `Expected length ${expected} but got ${arr.length}`);
+      },
+    };
+
+    // ── Render helpers ─────────────────────────────────────────
+    function esc(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function renderSuite(sr) {
+      const allPass = sr.tests.every(t => t.pass);
+      const el = document.createElement('div');
+      el.className = 'suite';
+      el.innerHTML = `
+        <div class="suite-header" onclick="const n=this.nextElementSibling;n.style.display=n.style.display==='none'?'':'none'">
+          <span class="suite-name">${esc(sr.name)}</span>
+          <span class="suite-badge ${allPass?'badge-pass':'badge-fail'}">
+            ${sr.tests.filter(t=>t.pass).length} / ${sr.tests.length}
+          </span>
+        </div>
+        <div class="tests">
+          ${sr.tests.map(t=>`
+            <div class="test ${t.pass?'pass':'fail'}">
+              <span class="icon">${t.pass?'✔':'✖'}</span>
+              <div class="test-inner">
+                <div class="name">${esc(t.name)}</div>
+                ${!t.pass?`<div class="err">${esc(t.error)}</div>`:''}
+              </div>
+            </div>`).join('')}
+        </div>`;
+      document.getElementById('suites').appendChild(el);
+    }
+
+    function updateSummary(pass, fail, total) {
+      document.getElementById('statTotal').textContent = total;
+      document.getElementById('statPass').textContent  = pass;
+      document.getElementById('statFail').textContent  = fail;
+      const fill = document.getElementById('progressFill');
+      fill.style.width = total > 0 ? `${(pass/total)*100}%` : '0%';
+      if (fail > 0) fill.classList.add('has-fail');
+    }
+
+    // ── Main runner ────────────────────────────────────────────
+    async function runAllSuites() {
+      const start = Date.now();
+      let totalPass = 0, totalFail = 0;
+
+      for (const suite of window.__testSuites) {
+        const sr = { name: suite.name, tests: [] };
+        const testFn = async (name, body) => {
+          let pass = true, error = '';
+          try { await body(assert); } catch(e) { pass = false; error = e.message || String(e); }
+          sr.tests.push({ name, pass, error });
+        };
+        try { await suite.fn(testFn); } catch(e) {
+          sr.tests.push({ name: `[Suite error] ${e.message}`, pass: false, error: e.stack || e.message });
+        }
+        totalPass += sr.tests.filter(t => t.pass).length;
+        totalFail += sr.tests.filter(t => !t.pass).length;
+        renderSuite(sr);
+        updateSummary(totalPass, totalFail, totalPass + totalFail);
+        await new Promise(r => setTimeout(r, 0));
+      }
+
+      document.getElementById('runTime').textContent =
+        `Completed in ${((Date.now()-start)/1000).toFixed(2)}s · ${totalPass} passed, ${totalFail} failed`;
+      chrome.storage.local._data = {};
+    }
+
+    window.addEventListener('load', () => setTimeout(runAllSuites, 50));
+  </script>
+</body>
+</html>

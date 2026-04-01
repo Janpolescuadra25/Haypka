@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Reconciliation Dashboard - R365 & Toast</title>
+  <link rel="stylesheet" href="../styles/dashboard.css">
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <header class="dash-header">
+      <div class="header-left">
+        <h1>R365 &amp; Toast Reconciliation Dashboard</h1>
+        <div class="user-info">
+          <span id="userName">User</span>
+          <span class="separator">·</span>
+          <span id="userRole">Admin</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="newReconciliationBtn" class="btn btn-primary">+ New Reconciliation</button>
+        <button id="refreshBtn"           class="btn btn-secondary">↺ Refresh</button>
+        <button id="exportAllBtn"         class="btn btn-secondary">⬇ Export All</button>
+        <a href="settings.html" class="btn btn-secondary">⚙ Settings</a>
+      </div>
+    </header>
+
+    <!-- KPI Summary Cards -->
+    <div class="summary-cards">
+      <div class="card">
+        <h3>Total Reconciliations</h3>
+        <div class="value" id="totalReconciliations">0</div>
+      </div>
+      <div class="card">
+        <h3>Matched</h3>
+        <div class="value success" id="matchedCount">0</div>
+      </div>
+      <div class="card">
+        <h3>Discrepancies</h3>
+        <div class="value error" id="discrepancyCount">0</div>
+      </div>
+      <div class="card">
+        <h3>Total Variance</h3>
+        <div class="value error" id="totalVariance">$0.00</div>
+      </div>
+      <div class="card">
+        <h3>Match Rate</h3>
+        <div class="value" id="matchRate">0.0%</div>
+      </div>
+    </div>
+
+    <!-- Comparison quick-start (raw entries view) -->
+    <div class="summary-cards" style="margin-top: 8px;">
+      <div class="card">
+        <h3>R365 Entries</h3>
+        <div class="value" id="totalDiff">–</div>
+      </div>
+      <div class="card">
+        <h3>Toast Only</h3>
+        <div class="value" id="toastOnly">–</div>
+      </div>
+      <div class="card">
+        <h3>R365 Only</h3>
+        <div class="value" id="r365Only">–</div>
+      </div>
+      <div class="card">
+        <h3>Amount Diffs</h3>
+        <div class="value" id="amountDiffs">–</div>
+      </div>
+      <div class="card">
+        <h3>Total Matched</h3>
+        <div class="value success" id="totalMatched">–</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <input type="text" id="searchInput" placeholder="Search by location, category, or status…">
+      <select id="dateFilter">
+        <option value="all">All Time</option>
+        <option value="today">Today</option>
+        <option value="week">Last 7 Days</option>
+        <option value="month">Last 30 Days</option>
+      </select>
+      <select id="typeFilter">
+        <option value="all">All Differences</option>
+        <option value="R365_ONLY">R365 Only</option>
+        <option value="TOAST_ONLY">Toast Only</option>
+        <option value="AMOUNT_DIFFERENCE">Amount Differences</option>
+      </select>
+      <button id="clearDataBtn" class="btn btn-danger">🗑 Clear All Data</button>
+    </div>
+
+    <!-- Reconciliation History Table -->
+    <div class="differences-section">
+      <h2>Recent Reconciliations</h2>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Location</th>
+            <th>Category</th>
+            <th>Toast Amount</th>
+            <th>R365 Amount</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="reconciliationTableBody">
+          <tr>
+            <td colspan="7" class="text-center text-muted">No reconciliations found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Status chart placeholder (simple text-based) -->
+    <div class="chart-section" style="display:none;">
+      <canvas id="statusChart"        width="300" height="200"></canvas>
+      <canvas id="varianceTrendChart" width="600" height="200"></canvas>
+      <canvas id="categoryChart"      width="400" height="200"></canvas>
+    </div>
+
+    <!-- No data notice -->
+    <div id="noData" class="no-data" style="display:none;">
+      <p>No comparison results found. Please extract data from R365 and Toast, then run a comparison.</p>
+      <a href="javascript:void(0)" onclick="chrome.runtime.openOptionsPage ? chrome.runtime.openOptionsPage() : window.open('settings.html')">
+        Go to Settings →
+      </a>
+    </div>
+
+  </div><!-- /.container -->
+
+  <!-- Details Modal -->
+  <div id="detailsModal" class="modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-backdrop" onclick="document.getElementById('detailsModal').style.display='none'"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Reconciliation Details</h2>
+        <button class="modal-close" onclick="document.getElementById('detailsModal').style.display='none'" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <table class="detail-table">
+          <tr><th>Date</th>      <td id="detailDate">–</td></tr>
+          <tr><th>Location</th>  <td id="detailLocation">–</td></tr>
+          <tr><th>Category</th>  <td id="detailCategory">–</td></tr>
+          <tr><th>Toast Amount</th><td id="detailToastAmount">–</td></tr>
+          <tr><th>R365 Amount</th> <td id="detailR365Amount">–</td></tr>
+          <tr><th>Variance</th>  <td id="detailVariance">–</td></tr>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('detailsModal').style.display='none'">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../scripts/storage-manager.js"></script>
+  <script src="../scripts/comparison-engine.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

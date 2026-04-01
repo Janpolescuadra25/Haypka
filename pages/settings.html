@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Settings - R365 & Toast Reconciliation</title>
+  <link rel="stylesheet" href="../styles/settings.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Settings</h1>
+      <button id="backBtn" class="btn btn-secondary">← Back</button>
+    </header>
+
+    <!-- Account Mappings -->
+    <div class="settings-section">
+      <h2>Account Mappings</h2>
+      <p class="description">Map account names between R365 and Toast so the comparison engine can match them correctly.</p>
+
+      <div class="mapping-container">
+        <div class="mapping-group">
+          <h3>R365 Account Mappings</h3>
+          <div id="r365Mappings"></div>
+          <button id="addR365MappingBtn" class="btn btn-primary">+ Add R365 Mapping</button>
+        </div>
+
+        <div class="mapping-group">
+          <h3>Toast Account Mappings</h3>
+          <div id="toastMappings"></div>
+          <button id="addToastMappingBtn" class="btn btn-primary">+ Add Toast Mapping</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison Settings -->
+    <div class="settings-section">
+      <h2>Comparison Settings</h2>
+
+      <div class="setting-item">
+        <label for="minDifference">Minimum Difference Amount ($)</label>
+        <input type="number" id="minDifference" step="0.01" min="0" value="0.01">
+        <p class="help-text">Differences below this amount are treated as matched (must be ≥ 0).</p>
+        <p class="field-error" id="minDifferenceError" style="display:none; color: #f44336; font-size: 0.85rem; margin-top: 4px;">
+          Please enter a valid amount of 0 or greater.
+        </p>
+      </div>
+
+      <div class="setting-item">
+        <label>
+          <input type="checkbox" id="autoExtract">
+          Auto-extract data when visiting R365 / Toast pages
+        </label>
+      </div>
+
+      <div class="setting-item">
+        <label>
+          <input type="checkbox" id="showNotifications">
+          Show in-page notifications during extraction
+        </label>
+      </div>
+    </div>
+
+    <!-- Data Management -->
+    <div class="settings-section">
+      <h2>Data Management</h2>
+      <div class="data-actions">
+        <button id="exportDataBtn" class="btn btn-primary">Export All Data</button>
+        <button id="importDataBtn" class="btn btn-primary">Import Data</button>
+        <button id="clearR365Btn"  class="btn btn-danger">Clear R365 Data</button>
+        <button id="clearToastBtn" class="btn btn-danger">Clear Toast Data</button>
+        <button id="clearAllBtn"   class="btn btn-danger">Clear All Data</button>
+      </div>
+      <input type="file" id="importFileInput" accept=".json" style="display:none;">
+    </div>
+
+    <!-- Custom Messages -->
+    <div class="settings-section">
+      <h2>Custom Messages</h2>
+      <p class="description">These messages appear when their respective discrepancy type is found.</p>
+
+      <div class="setting-item">
+        <label for="r365OnlyMsg">R365 Only Entry Message</label>
+        <textarea id="r365OnlyMsg" rows="2" placeholder="Entry found in R365 but not in Toast"></textarea>
+      </div>
+
+      <div class="setting-item">
+        <label for="toastOnlyMsg">Toast Only Entry Message</label>
+        <textarea id="toastOnlyMsg" rows="2" placeholder="Entry found in Toast but not in R365"></textarea>
+      </div>
+
+      <div class="setting-item">
+        <label for="amountDiffMsg">Amount Difference Message</label>
+        <textarea id="amountDiffMsg" rows="2" placeholder="Amounts don't match between systems"></textarea>
+      </div>
+    </div>
+
+    <!-- Save / Reset -->
+    <div class="save-section">
+      <button id="saveSettingsBtn"  class="btn btn-success">Save Settings</button>
+      <button id="resetSettingsBtn" class="btn btn-secondary">Reset to Defaults</button>
+    </div>
+
+    <div id="statusMessage" class="status-message"></div>
+  </div>
+
+  <script src="../scripts/storage-manager.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>
