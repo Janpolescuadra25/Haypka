@@ -33,6 +33,7 @@ function setupEventListeners() {
   document.getElementById('compareBtn').addEventListener('click',      compareData);
   document.getElementById('dashboardBtn').addEventListener('click',    openDashboard);
   document.getElementById('settingsBtn').addEventListener('click',     openSettings);
+  document.getElementById('devToolsBtn').addEventListener('click',     openDevTools);
 }
 
 // ── URL validation helpers ─────────────────────────────────────
@@ -131,6 +132,10 @@ function openDashboard() {
 
 function openSettings() {
   chrome.tabs.create({ url: chrome.runtime.getURL('pages/settings.html') });
+}
+
+function openDevTools() {
+  chrome.tabs.create({ url: chrome.runtime.getURL('pages/dev-tools.html') });
 }
 
 // ── Status messaging ───────────────────────────────────────────

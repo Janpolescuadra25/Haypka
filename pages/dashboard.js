@@ -45,15 +45,48 @@ async function loadUserProfile() {
  */
 async function loadRecentReconciliations() {
     try {
-        const data = await chrome.storage.local.get(['reconciliations']);
-        const reconciliations = data.reconciliations || [];
-        
-        // Sort by date (most recent first)
-        reconciliations.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        const recentList = reconciliations.slice(0, 10);
-        displayReconciliations(recentList);
-        
+        const data = await chrome.storage.local.get(['comparisonResults']);
+        const results = data.comparisonResults;
+
+        if (!results) {
+            displayReconciliations([]);
+            const noData = document.getElementById('noData');
+            if (noData) noData.style.display = 'block';
+            return;
+        }
+
+        const noData = document.getElementById('noData');
+        if (noData) noData.style.display = 'none';
+
+        // Build a unified display list from differences + matched entries
+        const diffRows = (results.differences || []).map(d => ({
+            id:           `diff-${d.date}-${d.account}`,
+            date:         d.date,
+            locationName: d.account,
+            category:     d.type,
+            toastAmount:  d.toastEntry ? d.toastEntry.amount : 0,
+            r365Amount:   d.r365Entry  ? d.r365Entry.amount  : 0,
+            status:       d.type === 'AMOUNT_DIFFERENCE' ? 'discrepancy'
+                        : d.type === 'TOAST_ONLY'        ? 'toast-only'
+                        : 'r365-only',
+        }));
+
+        const matchRows = (results.matched || []).map(m => ({
+            id:           `match-${m.date}-${m.account}`,
+            date:         m.date,
+            locationName: m.account,
+            category:     'MATCHED',
+            toastAmount:  m.toastEntry ? m.toastEntry.amount : 0,
+            r365Amount:   m.r365Entry  ? m.r365Entry.amount  : 0,
+            status:       'matched',
+        }));
+
+        const rows = [...diffRows, ...matchRows]
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        window._allRows = rows; // cache for filtering
+        displayReconciliations(rows.slice(0, 50));
+
     } catch (error) {
         console.error('Error loading reconciliations:', error);
         showNotification('Failed to load reconciliations', 'error');
@@ -109,21 +142,31 @@ function displayReconciliations(reconciliations) {
  */
 async function loadStatistics() {
     try {
-        const data = await chrome.storage.local.get(['reconciliations', 'statistics']);
-        const reconciliations = data.reconciliations || [];
-        
-        // Calculate statistics
-        const stats = calculateStatistics(reconciliations);
-        
-        // Update UI
-        document.getElementById('totalReconciliations').textContent = stats.total;
-        document.getElementById('matchedCount').textContent = stats.matched;
-        document.getElementById('discrepancyCount').textContent = stats.discrepancies;
-        document.getElementById('totalVariance').textContent = `$${formatCurrency(Math.abs(stats.totalVariance))}`;
-        
-        // Update charts
-        updateCharts(stats);
-        
+        const data = await chrome.storage.local.get(['comparisonResults']);
+        const results = data.comparisonResults;
+
+        if (!results || !results.summary) return; // No comparison run yet
+
+        const s = results.summary;
+        const total = s.totalDifferences + s.totalMatched;
+
+        // Top KPI row
+        document.getElementById('totalReconciliations').textContent = total;
+        document.getElementById('matchedCount').textContent         = s.totalMatched;
+        document.getElementById('discrepancyCount').textContent     = s.totalDifferences;
+        document.getElementById('totalVariance').textContent        = `$${formatCurrency(Math.abs(s.totalVariance))}`;
+
+        // Second KPI row
+        document.getElementById('totalDiff').textContent    = s.totalDifferences;
+        document.getElementById('toastOnly').textContent    = s.toastOnly;
+        document.getElementById('r365Only').textContent     = s.r365Only;
+        document.getElementById('amountDiffs').textContent  = s.amountDiffs;
+        document.getElementById('totalMatched').textContent = s.totalMatched;
+
+        // Match rate
+        const rate = total > 0 ? (s.totalMatched / total) * 100 : 0;
+        document.getElementById('matchRate').textContent = `${rate.toFixed(1)}%`;
+
     } catch (error) {
         console.error('Error loading statistics:', error);
         showNotification('Failed to load statistics', 'error');
@@ -218,7 +261,7 @@ function setupEventListeners() {
     const newRecBtn = document.getElementById('newReconciliationBtn');
     if (newRecBtn) {
         newRecBtn.addEventListener('click', () => {
-            window.location.href = 'reconciliation.html';
+            window.location.href = chrome.runtime.getURL('pages/popup.html');
         });
     }
     
@@ -253,6 +296,14 @@ function setupEventListeners() {
             searchReconciliations(e.target.value);
         });
     }
+
+    // Type filter
+    const typeFilter = document.getElementById('typeFilter');
+    if (typeFilter) {
+        typeFilter.addEventListener('change', (e) => {
+            filterByType(e.target.value);
+        });
+    }
 }
 
 /**
@@ -281,9 +332,10 @@ function attachRowEventListeners() {
  */
 async function viewReconciliationDetails(id) {
     try {
-        const data = await chrome.storage.local.get(['reconciliations']);
-        const reconciliation = data.reconciliations?.find(r => r.id === id);
-        
+        // Use the cached rows first; fall back to storage if cache is cold
+        const rows = window._allRows;
+        const reconciliation = rows ? rows.find(r => r.id === id) : null;
+
         if (reconciliation) {
             showDetailsModal(reconciliation);
         } else {
@@ -382,15 +434,14 @@ function refreshDashboard() {
 /**
  * Filter reconciliations by date
  */
-async function filterByDate(dateRange) {
+function filterByDate(dateRange) {
     try {
-        const data = await chrome.storage.local.get(['reconciliations']);
-        let reconciliations = data.reconciliations || [];
-        
+        let rows = window._allRows || [];
+
         if (dateRange !== 'all') {
             const now = new Date();
             let startDate;
-            
+
             switch (dateRange) {
                 case 'today':
                     startDate = new Date(now.setHours(0, 0, 0, 0));
@@ -402,39 +453,43 @@ async function filterByDate(dateRange) {
                     startDate = new Date(now.setMonth(now.getMonth() - 1));
                     break;
             }
-            
-            reconciliations = reconciliations.filter(r => 
-                new Date(r.date) >= startDate
-            );
+
+            rows = rows.filter(r => new Date(r.date) >= startDate);
         }
-        
-        displayReconciliations(reconciliations.slice(0, 10));
+
+        displayReconciliations(rows.slice(0, 50));
     } catch (error) {
         console.error('Error filtering by date:', error);
     }
 }
 
 /**
+ * Filter reconciliations by difference type
+ */
+function filterByType(type) {
+    const rows = window._allRows || [];
+    const filtered = type === 'all' ? rows : rows.filter(r => r.category === type);
+    displayReconciliations(filtered.slice(0, 50));
+}
+
+/**
  * Search reconciliations
  */
-async function searchReconciliations(query) {
+function searchReconciliations(query) {
     if (!query) {
         loadRecentReconciliations();
         return;
     }
-    
+
     try {
-        const data = await chrome.storage.local.get(['reconciliations']);
-        let reconciliations = data.reconciliations || [];
-        
-        query = query.toLowerCase();
-        reconciliations = reconciliations.filter(r => 
-            r.locationName?.toLowerCase().includes(query) ||
-            r.category?.toLowerCase().includes(query) ||
-            r.status?.toLowerCase().includes(query)
+        const rows = window._allRows || [];
+        const q = query.toLowerCase();
+        const filtered = rows.filter(r =>
+            r.locationName?.toLowerCase().includes(q) ||
+            r.category?.toLowerCase().includes(q) ||
+            r.status?.toLowerCase().includes(q)
         );
-        
-        displayReconciliations(reconciliations.slice(0, 10));
+        displayReconciliations(filtered.slice(0, 50));
     } catch (error) {
         console.error('Error searching reconciliations:', error);
     }

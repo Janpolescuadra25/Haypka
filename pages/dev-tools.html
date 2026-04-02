@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Haypka Dev Tools — Test Data Seeder</title>
+  <link rel="stylesheet" href="../styles/settings.css">
+  <style>
+    .seed-card {
+      background: var(--card-bg, #1e1e2e);
+      border: 1px solid var(--border, #2a2a3e);
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+    .seed-card h3 { margin: 0 0 6px; font-size: 1rem; color: #a78bfa; }
+    .seed-card p  { margin: 0 0 14px; font-size: 0.85rem; color: #888; }
+    .badge-grid   { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .badge        { padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+    .badge.green  { background: #16a34a22; color: #4ade80; border: 1px solid #16a34a55; }
+    .badge.red    { background: #dc262622; color: #f87171; border: 1px solid #dc262655; }
+    .badge.yellow { background: #ca8a0422; color: #fbbf24; border: 1px solid #ca8a0455; }
+    .badge.blue   { background: #2563eb22; color: #60a5fa; border: 1px solid #2563eb55; }
+    .result-log   {
+      background: #0d0d14; border-radius: 8px; padding: 14px 16px;
+      font-family: monospace; font-size: 0.82rem; color: #a0a0b0;
+      min-height: 80px; margin-top: 12px; white-space: pre-wrap;
+      border: 1px solid #2a2a3e;
+    }
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    .warning-box {
+      background: #ca8a0415; border: 1px solid #ca8a0455; border-radius: 8px;
+      padding: 10px 14px; font-size: 0.83rem; color: #fbbf24; margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🛠 Dev Tools — Test Data Seeder</h1>
+      <a href="dashboard.html" class="btn btn-secondary">← Dashboard</a>
+    </header>
+
+    <div class="warning-box">
+      ⚠ This page is for <strong>development &amp; testing only</strong>. It injects mock data directly into extension storage to let you verify the dashboard and comparison flow without needing live R365 / Toast pages.
+    </div>
+
+    <!-- Scenario cards -->
+    <div class="seed-card">
+      <h3>🍽 Scenario A — Mixed Results (1 Location, 4 Categories)</h3>
+      <p>Seeds a realistic small batch: some matched entries, amount differences, Toast-only, and R365-only transactions. Best for a quick end-to-end dashboard check.</p>
+      <div class="badge-grid">
+        <span class="badge green">3 Matched</span>
+        <span class="badge red">2 Amount Diffs</span>
+        <span class="badge yellow">1 Toast Only</span>
+        <span class="badge blue">1 R365 Only</span>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" id="seedScenarioA">Seed Scenario A</button>
+        <button class="btn btn-secondary" id="viewStorageBtn">View Raw Storage</button>
+        <button class="btn btn-danger"   id="clearStorageBtn">Clear All Data</button>
+      </div>
+    </div>
+
+    <div class="seed-card">
+      <h3>✅ Scenario B — All Matched (Clean Reconciliation)</h3>
+      <p>Seeds a perfect reconciliation where every R365 entry matches a Toast entry. Verifies the dashboard shows 100% match rate correctly.</p>
+      <div class="badge-grid">
+        <span class="badge green">6 Matched</span>
+        <span class="badge blue">$0 Variance</span>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" id="seedScenarioB">Seed Scenario B</button>
+      </div>
+    </div>
+
+    <div class="seed-card">
+      <h3>🔴 Scenario C — Large Variance (Stress Test)</h3>
+      <p>Seeds a batch with major discrepancies across multiple locations and categories. Good for verifying the variance totals and type-filter are working.</p>
+      <div class="badge-grid">
+        <span class="badge green">2 Matched</span>
+        <span class="badge red">5 Amount Diffs</span>
+        <span class="badge yellow">3 Toast Only</span>
+        <span class="badge blue">2 R365 Only</span>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" id="seedScenarioC">Seed Scenario C</button>
+      </div>
+    </div>
+
+    <!-- Log output -->
+    <div class="settings-section">
+      <h2>Output Log</h2>
+      <div class="result-log" id="logOutput">Ready. Click a scenario to seed data…</div>
+    </div>
+
+  </div>
+
+  <script src="dev-tools.js"></script>
+</body>
+</html>
