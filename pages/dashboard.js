@@ -114,7 +114,7 @@ function displayReconciliations(reconciliations) {
         <tr data-id="${rec.id}" class="reconciliation-row">
             <td>${formatDate(rec.date)}</td>
             <td>${rec.locationName || 'N/A'}</td>
-            <td>${rec.category || 'General'}</td>
+            <td>${formatCategory(rec.category) || 'General'}</td>
             <td>$${formatCurrency(rec.toastAmount)}</td>
             <td>$${formatCurrency(rec.r365Amount)}</td>
             <td>
