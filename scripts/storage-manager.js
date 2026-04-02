@@ -115,7 +115,13 @@ class StorageManager {
     return new Promise((resolve, reject) => {
       try {
         const data = JSON.parse(jsonData);
-        chrome.storage.local.set(data, resolve);
+        chrome.storage.local.set(data, () => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve();
+          }
+        });
       } catch (error) {
         reject(error);
       }
