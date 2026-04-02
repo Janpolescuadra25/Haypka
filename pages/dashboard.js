@@ -318,6 +318,13 @@ function setupEventListeners() {
             showNotification('All data cleared', 'success');
         });
     }
+
+    // Modal close buttons
+    const modalFooterCloseBtn = document.getElementById('modalFooterCloseBtn');
+    if (modalFooterCloseBtn) modalFooterCloseBtn.addEventListener('click', closeDetailsModal);
+
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    if (modalBackdrop) modalBackdrop.addEventListener('click', closeDetailsModal);
 }
 
 /**
@@ -375,6 +382,14 @@ function formatCategory(type) {
 }
 
 /**
+ * Close details modal
+ */
+function closeDetailsModal() {
+    const modal = document.getElementById('detailsModal');
+    if (modal) modal.style.display = 'none';
+}
+
+/**
  * Show details modal
  */
 function showDetailsModal(reconciliation) {
@@ -392,7 +407,7 @@ function showDetailsModal(reconciliation) {
     document.getElementById('detailVariance').textContent  = `${sign}$${formatCurrency(variance)}`;
     document.getElementById('detailVariance').className    = variance === 0 ? '' : variance > 0 ? 'text-success' : 'text-danger';
 
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
 }
 
 /**
