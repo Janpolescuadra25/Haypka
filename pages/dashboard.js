@@ -332,7 +332,9 @@ function setupEventListeners() {
 
     const modalBackdrop = document.getElementById('modalBackdrop');
     if (modalBackdrop) {
-        modalBackdrop.addEventListener('click', closeDetailsModal);
+        modalBackdrop.addEventListener('click', (e) => {
+            if (e.target === modalBackdrop) closeDetailsModal();
+        });
     }
 }
 
