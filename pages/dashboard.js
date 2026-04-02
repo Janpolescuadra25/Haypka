@@ -304,6 +304,20 @@ function setupEventListeners() {
             filterByType(e.target.value);
         });
     }
+
+    // Clear all data button
+    const clearDataBtn = document.getElementById('clearDataBtn');
+    if (clearDataBtn) {
+        clearDataBtn.addEventListener('click', async () => {
+            if (!confirm('Clear ALL comparison data? This cannot be undone.')) return;
+            await chrome.storage.local.clear();
+            window._allRows = [];
+            displayReconciliations([]);
+            loadStatistics();
+            document.getElementById('noData').style.display = 'block';
+            showNotification('All data cleared', 'success');
+        });
+    }
 }
 
 /**
@@ -348,38 +362,52 @@ async function viewReconciliationDetails(id) {
 }
 
 /**
+ * Format a raw difference type into a human-readable label
+ */
+function formatCategory(type) {
+    const labels = {
+        'AMOUNT_DIFFERENCE': 'Amount Difference',
+        'TOAST_ONLY':        'Toast Only (missing in R365)',
+        'R365_ONLY':         'R365 Only (missing in Toast)',
+        'MATCHED':           'Matched',
+    };
+    return labels[type] || type;
+}
+
+/**
  * Show details modal
  */
 function showDetailsModal(reconciliation) {
     const modal = document.getElementById('detailsModal');
     if (!modal) return;
-    
-    // Populate modal with reconciliation details
-    document.getElementById('detailDate').textContent = formatDate(reconciliation.date);
-    document.getElementById('detailLocation').textContent = reconciliation.locationName;
-    document.getElementById('detailCategory').textContent = reconciliation.category;
+
+    document.getElementById('detailDate').textContent        = formatDate(reconciliation.date);
+    document.getElementById('detailLocation').textContent   = reconciliation.locationName || '—';
+    document.getElementById('detailCategory').textContent   = formatCategory(reconciliation.category);
     document.getElementById('detailToastAmount').textContent = `$${formatCurrency(reconciliation.toastAmount)}`;
-    document.getElementById('detailR365Amount').textContent = `$${formatCurrency(reconciliation.r365Amount)}`;
-    
+    document.getElementById('detailR365Amount').textContent  = `$${formatCurrency(reconciliation.r365Amount)}`;
+
     const variance = reconciliation.r365Amount - reconciliation.toastAmount;
-    document.getElementById('detailVariance').textContent = `$${formatCurrency(variance)}`;
-    document.getElementById('detailVariance').className = variance >= 0 ? 'text-success' : 'text-danger';
-    
-    // Show modal
+    const sign     = variance > 0 ? '+' : '';
+    document.getElementById('detailVariance').textContent  = `${sign}$${formatCurrency(variance)}`;
+    document.getElementById('detailVariance').className    = variance === 0 ? '' : variance > 0 ? 'text-success' : 'text-danger';
+
     modal.style.display = 'block';
 }
 
 /**
  * Export single reconciliation
  */
-async function exportReconciliation(id) {
+function exportReconciliation(id) {
     try {
-        const data = await chrome.storage.local.get(['reconciliations']);
-        const reconciliation = data.reconciliations?.find(r => r.id === id);
-        
+        const rows = window._allRows || [];
+        const reconciliation = rows.find(r => r.id === id);
+
         if (reconciliation) {
             downloadAsJSON([reconciliation], `reconciliation_${id}.json`);
             showNotification('Reconciliation exported successfully', 'success');
+        } else {
+            showNotification('Entry not found — try refreshing the dashboard', 'error');
         }
     } catch (error) {
         console.error('Error exporting reconciliation:', error);
@@ -390,16 +418,15 @@ async function exportReconciliation(id) {
 /**
  * Export all reconciliations
  */
-async function exportAllReconciliations() {
+function exportAllReconciliations() {
     try {
-        const data = await chrome.storage.local.get(['reconciliations']);
-        const reconciliations = data.reconciliations || [];
-        
-        if (reconciliations.length > 0) {
-            downloadAsJSON(reconciliations, `all_reconciliations_${Date.now()}.json`);
-            showNotification(`Exported ${reconciliations.length} reconciliations`, 'success');
+        const rows = window._allRows || [];
+
+        if (rows.length > 0) {
+            downloadAsJSON(rows, `all_reconciliations_${Date.now()}.json`);
+            showNotification(`Exported ${rows.length} reconciliations`, 'success');
         } else {
-            showNotification('No reconciliations to export', 'warning');
+            showNotification('No reconciliations to export — run a comparison first', 'warning');
         }
     } catch (error) {
         console.error('Error exporting all reconciliations:', error);
