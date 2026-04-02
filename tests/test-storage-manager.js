@@ -199,4 +199,18 @@ suite('StorageManager – CRUD Operations', async (test) => {
     }
     assert.ok(threw, 'Should throw on malformed JSON');
   });
+
+  await test('importData – rejects when chrome.runtime.lastError is set', async (assert) => {
+    resetStorage();
+    chrome.runtime.lastError = { message: 'QUOTA_BYTES quota exceeded' };
+    let threw = false;
+    try {
+      await StorageManager.importData(JSON.stringify({ key: 'val' }));
+    } catch (e) {
+      threw = true;
+    } finally {
+      chrome.runtime.lastError = null;
+    }
+    assert.ok(threw, 'Should reject when storage.set encounters a runtime error');
+  });
 });

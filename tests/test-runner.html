@@ -58,7 +58,9 @@
         cb(result);
       },
       set(obj, cb) {
-        Object.assign(this._data, JSON.parse(JSON.stringify(obj)));
+        if (!chrome.runtime.lastError) {
+          Object.assign(this._data, JSON.parse(JSON.stringify(obj)));
+        }
         if (cb) cb();
       },
       clear(cb) { this._data = {}; if (cb) cb(); },
