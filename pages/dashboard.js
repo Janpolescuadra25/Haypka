@@ -319,6 +319,19 @@ function setupEventListeners() {
         });
     }
 
+    // "Go to Settings" link in the no-data notice
+    const goToSettingsLink = document.getElementById('goToSettingsLink');
+    if (goToSettingsLink) {
+        goToSettingsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (chrome.runtime.openOptionsPage) {
+                chrome.runtime.openOptionsPage();
+            } else {
+                window.location.href = chrome.runtime.getURL('pages/settings.html');
+            }
+        });
+    }
+
     // Modal close buttons
     const modalCloseBtn = document.getElementById('modalCloseBtn');
     if (modalCloseBtn) {
@@ -330,10 +343,11 @@ function setupEventListeners() {
         modalFooterCloseBtn.addEventListener('click', closeDetailsModal);
     }
 
-    const modalBackdrop = document.getElementById('modalBackdrop');
-    if (modalBackdrop) {
-        modalBackdrop.addEventListener('click', (e) => {
-            if (e.target === modalBackdrop) closeDetailsModal();
+    // Close modal when clicking outside the content (on the overlay)
+    const detailsModal = document.getElementById('detailsModal');
+    if (detailsModal) {
+        detailsModal.addEventListener('click', (e) => {
+            if (e.target === detailsModal) closeDetailsModal();
         });
     }
 }

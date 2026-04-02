@@ -125,7 +125,7 @@
     <!-- No data notice -->
     <div id="noData" class="no-data" style="display:none;">
       <p>No comparison results found. Please extract data from R365 and Toast, then run a comparison.</p>
-      <a href="javascript:void(0)" onclick="chrome.runtime.openOptionsPage ? chrome.runtime.openOptionsPage() : window.open('settings.html')">
+      <a href="settings.html" id="goToSettingsLink">
         Go to Settings →
       </a>
     </div>
@@ -134,7 +134,6 @@
 
   <!-- Details Modal -->
   <div id="detailsModal" class="modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-backdrop" id="modalBackdrop"></div>
     <div class="modal-content">
       <div class="modal-header">
         <h2 id="modalTitle">Reconciliation Details</h2>
