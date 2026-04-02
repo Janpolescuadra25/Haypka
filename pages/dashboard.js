@@ -318,6 +318,38 @@ function setupEventListeners() {
             showNotification('All data cleared', 'success');
         });
     }
+
+    // "Go to Settings" link in the no-data notice
+    const goToSettingsLink = document.getElementById('goToSettingsLink');
+    if (goToSettingsLink) {
+        goToSettingsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (chrome.runtime.openOptionsPage) {
+                chrome.runtime.openOptionsPage();
+            } else {
+                window.location.href = chrome.runtime.getURL('pages/settings.html');
+            }
+        });
+    }
+
+    // Modal close buttons
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+    if (modalCloseBtn) {
+        modalCloseBtn.addEventListener('click', closeDetailsModal);
+    }
+
+    const modalFooterCloseBtn = document.getElementById('modalFooterCloseBtn');
+    if (modalFooterCloseBtn) {
+        modalFooterCloseBtn.addEventListener('click', closeDetailsModal);
+    }
+
+    // Close modal when clicking outside the content (on the overlay)
+    const detailsModal = document.getElementById('detailsModal');
+    if (detailsModal) {
+        detailsModal.addEventListener('click', (e) => {
+            if (e.target === detailsModal) closeDetailsModal();
+        });
+    }
 }
 
 /**
@@ -375,6 +407,14 @@ function formatCategory(type) {
 }
 
 /**
+ * Close details modal
+ */
+function closeDetailsModal() {
+    const modal = document.getElementById('detailsModal');
+    if (modal) modal.style.display = 'none';
+}
+
+/**
  * Show details modal
  */
 function showDetailsModal(reconciliation) {
@@ -392,7 +432,7 @@ function showDetailsModal(reconciliation) {
     document.getElementById('detailVariance').textContent  = `${sign}$${formatCurrency(variance)}`;
     document.getElementById('detailVariance').className    = variance === 0 ? '' : variance > 0 ? 'text-success' : 'text-danger';
 
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
 }
 
 /**

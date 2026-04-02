@@ -125,7 +125,7 @@
     <!-- No data notice -->
     <div id="noData" class="no-data" style="display:none;">
       <p>No comparison results found. Please extract data from R365 and Toast, then run a comparison.</p>
-      <a href="javascript:void(0)" onclick="chrome.runtime.openOptionsPage ? chrome.runtime.openOptionsPage() : window.open('settings.html')">
+      <a href="settings.html" id="goToSettingsLink">
         Go to Settings →
       </a>
     </div>
@@ -134,11 +134,10 @@
 
   <!-- Details Modal -->
   <div id="detailsModal" class="modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-backdrop" onclick="document.getElementById('detailsModal').style.display='none'"></div>
     <div class="modal-content">
       <div class="modal-header">
         <h2 id="modalTitle">Reconciliation Details</h2>
-        <button class="modal-close" onclick="document.getElementById('detailsModal').style.display='none'" aria-label="Close">×</button>
+        <button class="modal-close" id="modalCloseBtn" aria-label="Close">×</button>
       </div>
       <div class="modal-body">
         <table class="detail-table">
@@ -151,7 +150,7 @@
         </table>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="document.getElementById('detailsModal').style.display='none'">Close</button>
+        <button class="btn btn-secondary" id="modalFooterCloseBtn">Close</button>
       </div>
     </div>
   </div>

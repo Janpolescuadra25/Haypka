@@ -356,8 +356,7 @@ h3 {
 .text-success { color: #10b981; }
 .text-danger { color: #ef4444; }
 
-.modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
-.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: -1; }
+.modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,.5); }
 .modal-content { background: white; border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,.2); max-width: 520px; width: 100%; overflow: hidden; }
 .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid #e2e8f0; }
 .modal-header h2 { font-size: 18px; font-weight: 600; color: #1e293b; }
