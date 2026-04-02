@@ -320,9 +320,6 @@ function setupEventListeners() {
     }
 
     // Modal close buttons
-    const modalCloseBtn = document.getElementById('modalCloseBtn');
-    if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeDetailsModal);
-
     const modalFooterCloseBtn = document.getElementById('modalFooterCloseBtn');
     if (modalFooterCloseBtn) modalFooterCloseBtn.addEventListener('click', closeDetailsModal);
 
